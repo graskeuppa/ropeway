@@ -8,6 +8,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 repositories {
@@ -39,7 +40,25 @@ application {
     mainClass = 'org.example.App'
 }
 
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'org.example.App'
+        )
+    }
+}
+
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+// El shadowJar también debe tener el mismo manifest
+shadowJar {
+    archiveBaseName.set('app')
+    archiveClassifier.set('all')
+    archiveVersion.set('')
+    manifest {
+        attributes 'Main-Class': 'org.example.App'
+    }
 }
