@@ -7,7 +7,6 @@ import DS.AVL.*;
 import DS.HTable.*;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-
 import java.io.*;
 import java.util.*;
 
@@ -15,16 +14,16 @@ public class CommandHandler {
     private final Gson gson = new Gson();
 
     public String process(String line) {
-
+        // The command is split by " ", each subsequent substring represents an argument
         String[] segments = line.trim().split(" ");
         // When command argument is empty
         if (segments.length == 0)
             return gson.toJson(Map.of("error", "Empty command, yo!"));
-
         // The first element of the array shall be the command
         String command = segments[0];
 
         switch (command) {
+
             // Creates a new instance of Move, adds it to an ArrayList
             case "MAKE_MOVE_AL":
                 // MAKE_MOVE <date> <amount> <tag> <source>
@@ -33,8 +32,8 @@ public class CommandHandler {
                             "Not enough arguments, yo! - Expected: MAKE_MOVE_AL date amount tag source"));
                 return makeMoveAL(segments);
 
-            // Creates a new move, adds it to three HashTables, with the keys being the
-            // date, tag and source, respectively
+            // Creates a new move, adds it to three separate data structures for ease of
+            // searching.
             case "MAKE_MOVE":
 
                 if (segments.length < 5)
@@ -45,7 +44,7 @@ public class CommandHandler {
             // Calls getMovesPerDate (returns all the moves associated with a given date)
             case "GET_MOVES_PER_DATE":
                 // GET_DATE <yyyy-mm-dd> or whatever format is placed in, so long as it is
-                // consistent
+                // consistent and uses any non numerical symbol to separate the date numbers.
                 if (segments.length < 2)
                     return gson.toJson(Map.of("Command err", "No date, yo! - Expected: GET_MOVES_PER_DATE date"));
                 return getMovesPerDate(segments[1]);
@@ -58,11 +57,31 @@ public class CommandHandler {
     }
 
     private String getMovesPerDate(String date) {
-        ArrayList<Move> moves = new ArrayList<>();
-        // Mock
-        moves.add(new Move(date, 123, "TPT", "Efectivo"));
 
-        return gson.toJson(Map.of("Moves", moves));
+        File moves = new File("./JSON/movesDATE.json");
+        moves.getParentFile().mkdirs();
+        AVL<Move> tree;
+
+        if (moves.exists()) {
+
+            try (Reader reader = new FileReader(moves)) {
+                tree = gson.fromJson(reader, new TypeToken<AVL<Move>>() {
+                }.getType());
+
+                if (tree == null)
+                    tree = new AVL<>();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                tree = new AVL<>();
+            }
+
+            ArrayList<Move> dataList = tree.search(Integer.parseInt(date.replace("-", " ")));
+            return dataList.toString();
+
+        } else {
+            return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
+        }
     }
 
     private String makeMoveAL(String[] arguments) {
@@ -302,4 +321,5 @@ public class CommandHandler {
         return results;
 
     }
+
 }
