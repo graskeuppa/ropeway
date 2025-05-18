@@ -1,3 +1,5 @@
+package DS.AVL;
+
 import java.util.ArrayList;
 
 public class AVL<T> {
@@ -19,9 +21,9 @@ public class AVL<T> {
             this.right = null;
         }
 
-        public boolean isLeaf() {
-            return this.left == null && this.right == null;
-        }
+        // public boolean isLeaf() {
+        // return this.left==null&&this.right==null;
+        // }
 
         // Actualización de altura
         public void updateHeight() {
