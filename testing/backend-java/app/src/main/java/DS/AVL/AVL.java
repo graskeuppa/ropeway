@@ -43,12 +43,12 @@ public class AVL<T> {
     // Estructura de datos auxiliar para el método que regresa los movimientos entre
     // dos fechas, para almacenar únicamente la información relevante para el
     // método, ignorando cosas como la altura.
-    private static class Pair<I, L> {
+    public static class Pir<I, L> {
 
         protected I identifier;
         protected L list;
 
-        public Pair(I id, L list) {
+        public Pir(I id, L list) {
             this.identifier = id;
             this.list = list;
         }
@@ -237,10 +237,14 @@ public class AVL<T> {
         return balance(anode);
     }
 
-    // Regresa una lista con movimientos contenidos entre dos periodos de tiempo
-    public ArrayList<Pair<Integer, ArrayList<T>>> getBetween(AVLNode<T> root, int k1, int k2) {
+    public ArrayList<Pir<Integer, ArrayList<T>>> getBetween(int k1, int k2) {
+        return getBetweenRec(root, k1, k2);
+    }
 
-        ArrayList<Pair<Integer, ArrayList<T>>> NodeList = new ArrayList<>();
+    // Regresa una lista con movimientos contenidos entre dos periodos de tiempo
+    private ArrayList<Pir<Integer, ArrayList<T>>> getBetweenRec(AVLNode<T> root, int k1, int k2) {
+
+        ArrayList<Pir<Integer, ArrayList<T>>> NodeList = new ArrayList<>();
 
         // El árbol es vacío
         if (root == null) {
@@ -249,18 +253,18 @@ public class AVL<T> {
 
         // El identificador del nodo está entre los límites, añádelo a la lista de pares
         if (k1 <= root.key && root.key <= k2) {
-            NodeList.add(new Pair<Integer, ArrayList<T>>(root.key, root.dataList));
+            NodeList.add(new Pir<Integer, ArrayList<T>>(root.key, root.dataList));
             // Si el nodo es una hoja, estamos hasta abajo del árbol. Regresa la lista
             if (root.isLeaf())
                 return NodeList;
         }
 
         if (k1 < root.key) {
-            NodeList.addAll(getBetween(root.left, k1, k2));
+            NodeList.addAll(getBetweenRec(root.left, k1, k2));
         }
 
         if (root.key < k2) {
-            NodeList.addAll(getBetween(root.right, k1, k2));
+            NodeList.addAll(getBetweenRec(root.right, k1, k2));
         }
 
         return NodeList;
