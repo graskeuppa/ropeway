@@ -1,6 +1,7 @@
 package org.example;
 
 import DS.AVL.*;
+import DS.AVL.AVL.Pir;
 import DS.HTable.*;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -72,14 +73,57 @@ public class CommandHandler {
                     return gson
                             .toJson(Map.of("Command err", "No source, yo! - Expected: GET_MOVES_PER_SOURCE -source-"));
                 return getMovesPerSource(segments[1]);
+            // --------------------------------------------------------------------------------------------
 
+            // --------------------------------------------------------------------------------------------
+            // Calls getMovesBetween (returns a list of Pairs, the first element of each
+            // pair is the date and the second the list of moves associated with it)
+            case "GET_MOVES_BETWEEN":
+                // GET_MOVES_BETWEEN <date1> <date2>
+                if (segments.length < 3)
+                    return gson.toJson(Map.of("Command err",
+                            "Incomplete date range, yo! - Expected: GET_MOVES_BETWEEN -date1- -date2-"));
+                return getMovesBetween(segments[1], segments[2]);
+
+            // ----------------------------------------------|----------------------------------------------
             // MORE COMMANDS HERE!
-            // case "GET_MOVES_WITHIN":
-            // case "GET_MOVES_PER_TAG_WITHIN":
-            // case "GET_MOVES_PER_SOURCE_WITHIN":
+            // case "GET_MOVES_PER_TAG_BETWEEN":
+            // case "GET_MOVES_PER_SOURCE_BETWEEN":
 
             default: // Given command does not exist
                 return gson.toJson(Map.of("Wrong command err", "No such command, yo!"));
+
+        }
+    }
+
+    private String getMovesBetween(String d1, String d2) {
+        File moves = new File("./JSON/movesDATE.json");
+        moves.getParentFile().mkdirs();
+        AVL<Move> tree;
+
+        int date1 = Integer.parseInt(d1);
+        int date2 = Integer.parseInt(d2);
+
+        if (moves.exists()) {
+
+            try (Reader reader = new FileReader(moves)) {
+                tree = gson.fromJson(reader, new TypeToken<AVL<Move>>() {
+                }.getType());
+
+                if (tree == null)
+                    tree = new AVL<>();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                tree = new AVL<>();
+            }
+
+            ArrayList<Pir<Integer, ArrayList<Move>>> moveList = tree.getBetween(date1, date2);
+
+            return gson.toJson(Map.of("Moves made between " + date1 + " and " + date2 + ":", moveList.toString()));
+
+        } else {
+            return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
     }
 
