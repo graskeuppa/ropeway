@@ -1,6 +1,3 @@
-// Aquí estarán las importaciones de mi implementación de HashTable y AVL, definiré los métodos del mismo 
-// modo que los revisé la otra vez. Veamos
-
 package org.example;
 
 import DS.AVL.*;
@@ -11,6 +8,8 @@ import java.io.*;
 import java.util.*;
 
 public class CommandHandler {
+    // The cornerstone of this whole thing, allows for serialising and deserialising
+    // objects to their equivalent JSON form
     private final Gson gson = new Gson();
 
     public String process(String line) {
@@ -24,32 +23,60 @@ public class CommandHandler {
 
         switch (command) {
 
+            // --------------------------------------------------------------------------------------------
             // Creates a new instance of Move, adds it to an ArrayList
             case "MAKE_MOVE_AL":
+                // MAKE_MOVE_AL <date> <amount> <tag> <source>
+                if (segments.length < 5)
+                    return gson.toJson(Map.of("Command err",
+                            "Not enough arguments, yo! - Expected: MAKE_MOVE_AL -date- -amount- -tag- -source-"));
+                return makeMoveAL(segments);
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
+            // Creates a new move, adds it to three separate data structures for ease of
+            // searching. These files will later be used for combined searches.
+            case "MAKE_MOVE":
                 // MAKE_MOVE <date> <amount> <tag> <source>
                 if (segments.length < 5)
                     return gson.toJson(Map.of("Command err",
-                            "Not enough arguments, yo! - Expected: MAKE_MOVE_AL date amount tag source"));
-                return makeMoveAL(segments);
-
-            // Creates a new move, adds it to three separate data structures for ease of
-            // searching.
-            case "MAKE_MOVE":
-
-                if (segments.length < 5)
-                    return gson.toJson(Map.of("Command err",
-                            "Not enough arguments, yo! - Expected: MAKE_MOVE date amount tag source"));
+                            "Not enough arguments, yo! - Expected: MAKE_MOVE -date- -amount- -tag- -source-"));
                 return makeMove(segments);
+            // --------------------------------------------------------------------------------------------
 
-            // Calls getMovesPerDate (returns all the moves associated with a given date)
+            // --------------------------------------------------------------------------------------------
+            // Calls getMovesPerDate (returns all the moves associated with the given date)
             case "GET_MOVES_PER_DATE":
                 // GET_DATE <yyyy-mm-dd> or whatever format is placed in, so long as it is
                 // consistent and uses any non numerical symbol to separate the date numbers.
                 if (segments.length < 2)
-                    return gson.toJson(Map.of("Command err", "No date, yo! - Expected: GET_MOVES_PER_DATE date"));
+                    return gson.toJson(Map.of("Command err", "No date, yo! - Expected: GET_MOVES_PER_DATE -date-"));
                 return getMovesPerDate(segments[1]);
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
+            // Calls getMovesPerTag (returns all moves associated with the given tag)
+            case "GET_MOVES_PER_TAG":
+                // GET_MOVES_PER_TAG <tag>
+                if (segments.length < 2)
+                    return gson.toJson(Map.of("Command err", "No tag, yo! - Expected: GET_MOVES_PER_TAG -tag-"));
+                return getMovesPerTag(segments[1]);
+
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
+            // Calls getMovesPerSource, returns all moves associated with the given source)
+            case "GET_MOVES_PER_SOURCE":
+                // GET_MOVES_PER_SOURCE <source>
+                if (segments.length < 2)
+                    return gson
+                            .toJson(Map.of("Command err", "No source, yo! - Expected: GET_MOVES_PER_SOURCE -source-"));
+                return getMovesPerSource(segments[1]);
 
             // MORE COMMANDS HERE!
+            // case "GET_MOVES_WITHIN":
+            // case "GET_MOVES_PER_TAG_WITHIN":
+            // case "GET_MOVES_PER_SOURCE_WITHIN":
 
             default: // Given command does not exist
                 return gson.toJson(Map.of("Wrong command err", "No such command, yo!"));
@@ -57,7 +84,6 @@ public class CommandHandler {
     }
 
     private String getMovesPerDate(String date) {
-
         File moves = new File("./JSON/movesDATE.json");
         moves.getParentFile().mkdirs();
         AVL<Move> tree;
@@ -77,11 +103,69 @@ public class CommandHandler {
             }
 
             ArrayList<Move> dataList = tree.search(Integer.parseInt(date.replace("-", " ")));
-            return dataList.toString();
+            return gson.toJson(Map.of("Moves made on" + date, dataList.toString()));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
+    }
+
+    private String getMovesPerTag(String tag) {
+        File moves = new File("./JSON/movesTAG.json");
+        moves.getParentFile().mkdirs();
+        HTable<String, Move> htable;
+
+        if (moves.exists()) {
+
+            try (Reader reader = new FileReader(moves)) {
+                htable = gson.fromJson(reader, new TypeToken<HTable<String, Move>>() {
+                }.getType());
+
+                if (htable == null)
+                    htable = new HTable<>();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                htable = new HTable<>();
+            }
+
+            ArrayList<Move> taglist = htable.get(tag);
+
+            return gson.toJson(Map.of("Moves with the \"" + tag + "\" tag:", taglist.toString()));
+
+        } else {
+            return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
+        }
+
+    }
+
+    private String getMovesPerSource(String source) {
+        File moves = new File("./JSON/movesSOURCE.json");
+        moves.getParentFile().mkdirs();
+        HTable<String, Move> htable;
+
+        if (moves.exists()) {
+
+            try (Reader reader = new FileReader(moves)) {
+                htable = gson.fromJson(reader, new TypeToken<HTable<String, Move>>() {
+                }.getType());
+
+                if (htable == null)
+                    htable = new HTable<>();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                htable = new HTable<>();
+            }
+
+            ArrayList<Move> sourcelist = htable.get(source);
+
+            return gson.toJson(Map.of("Moves with the \"" + source + "\" source:", sourcelist.toString()));
+
+        } else {
+            return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
+        }
+
     }
 
     private String makeMoveAL(String[] arguments) {

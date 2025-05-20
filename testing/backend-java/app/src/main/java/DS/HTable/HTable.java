@@ -1,26 +1,14 @@
 /*
  * e.g.bollás
- * Analogía: Buzones de correo en un edificio residencial
- *
- * Se puede imaginar a la tabla hash como un buzón de correo en un edificio de residencia.
- *
- * Cada caja de correo (bucket) y cada residente (par valor-llave) recibe correo.
- *
- * Los dueños del edificio emplean una regla (función hash) para determinar la caja
- * de correo que cada residente debería usar dentro del buzón. 
- * En caso de que múltiples residentes tengan asignada la misma caja de correo (colisiones), 
- * se forman listas (LinkedList) dentro de ellas.
- *
- * Por trozos:
- *
+ * Finalmente comprendí el concepto de esta estructura usando una analogía con buzones de correo, por ello de los comentarios extensivos hablando de cartas, buzones, etc.
  */
 package DS.HTable;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 public class HTable<K, V> {
-    ; // Las cartas que entran a las cajas de correo llevan un nombre (key) y
-      // contenido (value)
+    // Las cartas que entran a las cajas de correo llevan un nombre (key) y
+    // contenido (value)
     private static class Entry<K, V> {
         K key;
         V value;
@@ -33,7 +21,7 @@ public class HTable<K, V> {
 
     // Cada caja de correo dentro del buzón:
     // Cada caja de correo contiene un fichero de cartas
-    private LinkedList<Entry<K, V>>[] buckets;
+    private ArrayList<Entry<K, V>>[] buckets;
     // La capacidad actual del buzón completo
     private int capacity;
     // La cantidad de cartas en todo el buzón-
@@ -49,8 +37,9 @@ public class HTable<K, V> {
         this.capacity = INITIAL_CAPACITY;
         // Crea 16 cajas de correo separadas, cada una con un fichero inicialmente vacío
         @SuppressWarnings("unchecked")
-        LinkedList<Entry<K, V>>[] temp = (LinkedList[]) new LinkedList[capacity];
-        this.buckets = temp; // Esto es porque Java no te deja crear arreglos genéricos en runtime.
+        ArrayList<Entry<K, V>>[] temp = (ArrayList[]) new ArrayList[capacity];
+        this.buckets = temp; // Esto es porque Java no te deja crear arreglos genéricos en runtime :/, que
+                             // dolor de cabeza smh.
         // Cantidad de cartas total en el buzón
         this.size = 0;
     }
@@ -58,7 +47,38 @@ public class HTable<K, V> {
     // Regla del edificio para determinar la caja de correos a usar en base al
     // nombre
     private int getIndex(K key) {
-        return Math.abs(key.hashCode()) % capacity; // Debería reformular esto.
+
+        // Consideraciones especiales para las cadenas de texto de Move
+
+        if (key instanceof String) {
+            if (((String) key).length() == 3) {
+
+                String definitelyAString = (String) key;
+
+                int c1 = definitelyAString.charAt(0);
+                int c2 = definitelyAString.charAt(1);
+                int c3 = definitelyAString.charAt(2);
+
+                int hash = (c1 * 31 * 31 + c2 * 31 + c3) % capacity;
+                return hash;
+
+            } else if (((String) key).length() == 5) {
+
+                String definitelyAString = (String) key;
+
+                int c1 = definitelyAString.charAt(0);
+                int c2 = definitelyAString.charAt(1);
+                int c3 = definitelyAString.charAt(2);
+                int c4 = definitelyAString.charAt(3);
+                int c5 = definitelyAString.charAt(4);
+
+                int hash = (c1 * 31 * 31 * 31 * 31 + c2 * 31 * 31 * 31 + c3 * 31 * 31 + c4 * 31 + c5) % capacity;
+                return hash;
+
+            }
+        }
+        // Función genérica para cualquier otra cadena o cosa
+        return Math.abs(key.hashCode()) % capacity;
     }
 
     // PUT: La entrega de una nueva carta (par llave-valor) en la caja aproiada
@@ -68,21 +88,23 @@ public class HTable<K, V> {
 
         // Si aún no hay un fichero de cartas en la caja, inicia uno
         if (buckets[index] == null) {
-            buckets[index] = new LinkedList<>();
+            buckets[index] = new ArrayList<>();
         }
 
+        // CONSIDERACIÓN INNECESARIA, al final necesito la posiblidad de almacenar
+        // repetidos.
         // Para cada carta en el fichero de la caja actual, si hay dos dirigidas
         // a la misma persona, conserva la más nueva
-        for (Entry<K, V> entry : buckets[index]) { // Para cada carta en el fichero:
-            if (entry.key.equals(key)) { // si la persona de la carta vieja es la
-                                         // misma que la de la nueva
-                entry.value = value; // entonces pon el mensaje de la nueva en
-                                     // donde la vieja.
-                return; // Termina antes la ejecución. Se salta lo sig.
-            }
-        }
+        // for (Entry<K, V> entry : buckets[index]) { // Para cada carta en el fichero:
+        // if (entry.key.equals(key)) { // si la persona de la carta vieja es la
+        // misma que la de la nueva
+        // entry.value = value; // entonces pon el mensaje de la nueva en
+        // donde la vieja.
+        // return; // Termina antes la ejecución. Se salta lo sig.
+        // }
+        // }
 
-        buckets[index].add(new Entry<>(key, value)); // Si no hubo repetidos, entonces añade
+        buckets[index].add(new Entry<>(key, value)); // añade
                                                      // al fichero de la caja una nueva carta
                                                      // con los datos dados.
         size++; // Incrementa en uno el total de las cartas
@@ -98,19 +120,23 @@ public class HTable<K, V> {
 
     // GET: Revisar en qué caja de correo está una carta en base al nombre del
     // residente, leerla
-    public V get(K key) {
+    public ArrayList<V> get(K key) {
         // Obtén la caja correcta con el nombre
         int index = getIndex(key);
         // Referencia nueva al fichero correspondiente a la caja hallada por nombre
-        LinkedList<Entry<K, V>> bucket = buckets[index];
+        ArrayList<Entry<K, V>> bucket = buckets[index];
 
         if (bucket != null) { // Si el fichero de la caja no está vacio
+
+            ArrayList<V> Elements = new ArrayList<>(); // Nueva lista en la que se almacenan los elementos encontrados,
+                                                       // evitando regresar únicamente el primero
+
             for (Entry<K, V> entry : bucket) { // Para cada carta en el fichero
-                if (entry.key.equals(key)) { // Si el nombre en la carta es igual al
-                                             // del que la busca
-                    return entry.value; // Revisa lo que tiene escrito, es suya, duh.
+                if (entry.key.equals(key)) {
+                    Elements.add(entry.value);
                 }
             }
+            return Elements;
         }
         return null; // Entonces no se encontró ninguna carta a ese
                      // nombre
@@ -122,7 +148,7 @@ public class HTable<K, V> {
         // Obtén la caja correcta con el nombre
         int index = getIndex(key);
         // Referencia nueva al fichero correspondiente a la caja hallada por nombre
-        LinkedList<Entry<K, V>> bucket = buckets[index];
+        ArrayList<Entry<K, V>> bucket = buckets[index];
 
         if (bucket != null) { // Si el fichero no está vacío
             for (Entry<K, V> entry : bucket) { // Para cada carta en el fichero
@@ -141,14 +167,14 @@ public class HTable<K, V> {
     // RESIZE: Cuando se pasa de cierta cantidad de cartas, se duplican las cajas de
     // corre\ y se redistribuye el correo existente en base a una nueva regla.
     public void resize() {
-        LinkedList<Entry<K, V>>[] oldBuckets = buckets; // Se guardan las viejas cajas
+        ArrayList<Entry<K, V>>[] oldBuckets = buckets; // Se guardan las viejas cajas
         capacity *= 2; // Se duplica la capacidad del buzón
         size = 0; // Se regresa por completo la cant. de cartas.
         @SuppressWarnings("unchecked")
-        LinkedList<Entry<K, V>>[] temp = (LinkedList[]) new LinkedList[capacity];
+        ArrayList<Entry<K, V>>[] temp = (ArrayList[]) new ArrayList[capacity];
         buckets = temp; // Las cajas actuales ahora son el doble de las
                         // anteriores, pero están vacías todas
-        for (LinkedList<Entry<K, V>> oldBucket : oldBuckets) { // Para cada caja vieja del buzón
+        for (ArrayList<Entry<K, V>> oldBucket : oldBuckets) { // Para cada caja vieja del buzón
             if (oldBucket != null) { // Si el fichero no estaba vacío
                 for (Entry<K, V> entry : oldBucket) { // Para cada carta en el fichero viejo
                     put(entry.key, entry.value); // Se meten en el del nuevo.
