@@ -10,11 +10,12 @@ import java.util.*;
 
 public class CommandHandler {
     // The cornerstone of this whole thing, allows for serialising and deserialising
-    // objects to their equivalent JSON form
+    // objects to their equivalent JSON form :o. Actual godsend
     private final Gson gson = new Gson();
 
     public String process(String line) {
-        // The command is split by " ", each subsequent substring represents an argument
+        // The string is segmented into substrings, each an argument for the
+        // CommandHandler
         String[] segments = line.trim().split(" ");
         // When command argument is empty
         if (segments.length == 0)
@@ -84,16 +85,168 @@ public class CommandHandler {
                     return gson.toJson(Map.of("Command err",
                             "Incomplete date range, yo! - Expected: GET_MOVES_BETWEEN -date1- -date2-"));
                 return getMovesBetween(segments[1], segments[2]);
+            // --------------------------------------------------------------------------------------------
 
-            // ----------------------------------------------|----------------------------------------------
+            // --------------------------------------------------------------------------------------------
+            // Calls getMovesPerTagBetween (returns all moves associated with the tag within
+            // the given dates)
+            case "GET_MOVES_PER_TAG_BETWEEN":
+                // GET_MOVES_PER_TAG_BETWEEN <tag> <date1> <date2>
+                if (segments.length < 4)
+                    return gson.toJson(Map.of("Command err",
+                            "Missing arguments, yo! - Expected: GET_MOVES_PER_TAG_BETWEEN -tag- -date1- -date2-"));
+                return getMovesPerTagBetween(segments[1], segments[2], segments[3]);
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
+            // Calls getMovesPerTagBetween (returns all moves associated with the tag within
+            // the given dates)
+            case "GET_MOVES_PER_SOURCE_BETWEEN":
+                // GET_MOVES_PER_SOURCE_BETWEEN <source> <date1> <date2>
+                if (segments.length < 4)
+                    return gson.toJson(Map.of("Command err",
+                            "Missing arguments, yo! - Expected: GET_MOVES_PER_SOURCE_BETWEEN -source- -date1- -date2-"));
+                return getMovesPerSourceBetween(segments[1], segments[2], segments[3]);
+            // --------------------------------------------------------------------------------------------
+
             // MORE COMMANDS HERE!
-            // case "GET_MOVES_PER_TAG_BETWEEN":
             // case "GET_MOVES_PER_SOURCE_BETWEEN":
 
             default: // Given command does not exist
                 return gson.toJson(Map.of("Wrong command err", "No such command, yo!"));
 
         }
+    }
+
+    private String getMovesPerSourceBetween(String source, String d1, String d2) {
+
+        // File location
+        File movesD = new File("./JSON/movesDATE.json");
+        movesD.getParentFile().mkdirs();
+        AVL<Move> tree;
+
+        File movesS = new File("./JSON/movesSOURCE.json");
+        movesS.getParentFile().mkdirs();
+        HTable<String, Move> htable;
+
+        int date1 = Integer.parseInt(d1);
+        int date2 = Integer.parseInt(d2);
+
+        // It's technically impossible for just one of them to exist, since makeMove
+        // makes both of them at the same time.
+        if (movesD.exists() && movesS.exists()) {
+
+            try (Reader reader1 = new FileReader(movesD);
+                    Reader reader2 = new FileReader(movesS);) {
+
+                tree = gson.fromJson(reader1, new TypeToken<AVL<Move>>() {
+                }.getType());
+                htable = gson.fromJson(reader2, new TypeToken<HTable<String, Move>>() {
+                }.getType());
+
+                if (tree == null && htable == null) {
+                    tree = new AVL<>();
+                    htable = new HTable<>();
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                tree = new AVL<>();
+                htable = new HTable<>();
+            }
+
+            // Get all the moves betweem two dates
+            ArrayList<Pir<Integer, ArrayList<Move>>> moveList = tree.getBetween(date1, date2);
+
+            // New list for storing all the moves
+            ArrayList<ArrayList<Move>> sources1 = new ArrayList<>();
+            for (Pir<Integer, ArrayList<Move>> pir : moveList) {
+                sources1.add(pir.returnList());
+            }
+
+            // Flattening the ArrayList
+            ArrayList<Move> sources2 = new ArrayList<>();
+            for (ArrayList<Move> sublist : sources1) {
+                sources2.addAll(sublist);
+            }
+
+            // Getting the moves with the associated tag
+            ArrayList<Move> sources3 = htable.get(source);
+
+            return gson.toJson(Map.of(
+                    "Moves made between " + date1 + " and " + date2 + " associated with the \"+" + source
+                            + "\" source:",
+                    sources3.toString()));
+
+        } else {
+            return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
+        }
+
+    }
+
+    private String getMovesPerTagBetween(String tag, String d1, String d2) {
+
+        // File location
+        File movesD = new File("./JSON/movesDATE.json");
+        movesD.getParentFile().mkdirs();
+        AVL<Move> tree;
+
+        File movesT = new File("./JSON/movesTAG.json");
+        movesT.getParentFile().mkdirs();
+        HTable<String, Move> htable;
+
+        int date1 = Integer.parseInt(d1);
+        int date2 = Integer.parseInt(d2);
+
+        // It's technically impossible for just one of them to exist, since makeMove
+        // makes both of them at the same time.
+        if (movesD.exists() && movesT.exists()) {
+
+            try (Reader reader1 = new FileReader(movesD);
+                    Reader reader2 = new FileReader(movesT);) {
+
+                tree = gson.fromJson(reader1, new TypeToken<AVL<Move>>() {
+                }.getType());
+                htable = gson.fromJson(reader2, new TypeToken<HTable<String, Move>>() {
+                }.getType());
+
+                if (tree == null && htable == null) {
+                    tree = new AVL<>();
+                    htable = new HTable<>();
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                tree = new AVL<>();
+                htable = new HTable<>();
+            }
+
+            // Get all the moves within two dates
+            ArrayList<Pir<Integer, ArrayList<Move>>> moveList = tree.getBetween(date1, date2);
+
+            // New list for storing all the moves
+            ArrayList<ArrayList<Move>> tags1 = new ArrayList<>();
+            for (Pir<Integer, ArrayList<Move>> pir : moveList) {
+                tags1.add(pir.returnList());
+            }
+
+            // Flattening the ArrayList
+            ArrayList<Move> tags2 = new ArrayList<>();
+            for (ArrayList<Move> sublist : tags1) {
+                tags2.addAll(sublist);
+            }
+
+            // Getting the moves with the associated tag
+            ArrayList<Move> tags3 = htable.get(tag);
+
+            return gson.toJson(Map.of(
+                    "Moves made between " + date1 + " and " + date2 + " associated with the \"+" + tag + "\" tag:",
+                    tags3.toString()));
+
+        } else {
+            return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
+        }
+
     }
 
     private String getMovesBetween(String d1, String d2) {
@@ -354,7 +507,9 @@ public class CommandHandler {
                 e.printStackTrace();
                 persource = new HTable<>();
             }
-        } else { // File does not exist, make a new one
+        } else
+
+        { // File does not exist, make a new one
 
             persource = new HTable<>();
 

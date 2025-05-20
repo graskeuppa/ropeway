@@ -53,6 +53,10 @@ public class AVL<T> {
             this.list = list;
         }
 
+        public L returnList() {
+            return this.list;
+        }
+
     }
 
     // ---------------------------------- (Inicio de métodos de legado)
