@@ -139,32 +139,40 @@ public class CommandHandler {
         }
     }
 
-    private String getMovesPerTagIn(String tag, String date) {
-        getMovesPerDate(date);
-        ArrayList<Move> moves = dataList;
+    ArrayList<Pir<Integer, ArrayList<Move>>> gmb;
 
-        for (Move move : moves) {
+    private String getMovesPerTagIn(String tag, String date) {
+
+        ArrayList<Move> temp = new ArrayList<>();
+
+        getMovesPerDate(date);
+        for (Move move : gmpd) {
             getMovesPerTag(move.tag);
+            temp.addAll(gmpt);
         }
 
         return gson.toJson(Map.of("Moves with the \"" + tag + "\" tag made on " + date
-                + ":", taglist.toString()));
+                + ":", temp.toString()));
 
     }
 
     private String getMovesPerSourceIn(String source, String date) {
-        getMovesPerDate(date);
-        ArrayList<Move> moves = dataList;
 
-        for (Move move : moves) {
-            getMovesPerSource(move.tag);
+        ArrayList<Move> temp = new ArrayList<>();
+
+        getMovesPerDate(date);
+        for (Move move : gmps) {
+            getMovesPerSource(move.source);
+            temp.addAll(gmps);
         }
 
         return gson.toJson(Map.of("Moves with the \"" + source + "\" source made on " + date
-                + ":", sourcelist.toString()));
+                + ":", temp.toString()));
 
     }
 
+    // TODO: Modificar la implementación para usar el campo de gmb declarado por
+    // fuera del método
     private String getMovesPerSourceBetween(String source, String d1, String d2) {
 
         // File location
@@ -231,6 +239,8 @@ public class CommandHandler {
 
     }
 
+    // TODO: Modificar la implementación para usar el campo de gmb declarado por
+    // fuera del método
     private String getMovesPerTagBetween(String tag, String d1, String d2) {
 
         // File location
@@ -318,17 +328,16 @@ public class CommandHandler {
                 tree = new AVL<>();
             }
 
-            ArrayList<Pir<Integer, ArrayList<Move>>> moveList = tree.getBetween(date1, date2);
+            gmb = tree.getBetween(date1, date2);
 
-            return gson.toJson(Map.of("Moves made between " + date1 + " and " + date2 + ":", moveList.toString()));
+            return gson.toJson(Map.of("Moves made between " + date1 + " and " + date2 + ":", gmb.toString()));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
     }
 
-    // Declarado por fuera para poder acceder al campo en métodos compuestos.
-    ArrayList<Move> dataList;
+    ArrayList<Move> gmpd;
 
     private String getMovesPerDate(String date) {
         File moves = new File("./JSON/movesDATE.json");
@@ -349,15 +358,15 @@ public class CommandHandler {
                 tree = new AVL<>();
             }
 
-            dataList = tree.search(Integer.parseInt(date.replace("-", " ")));
-            return gson.toJson(Map.of("Moves made on" + date, dataList.toString()));
+            gmpd = tree.search(Integer.parseInt(date.replace("-", " ")));
+            return gson.toJson(Map.of("Moves made on" + date, gmpd.toString()));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
     }
 
-    ArrayList<Move> taglist;
+    ArrayList<Move> gmpt;
 
     private String getMovesPerTag(String tag) {
         File moves = new File("./JSON/movesTAG.json");
@@ -378,9 +387,9 @@ public class CommandHandler {
                 htable = new HTable<>();
             }
 
-            taglist = htable.get(tag);
+            gmpt = htable.get(tag);
 
-            return gson.toJson(Map.of("Moves with the \"" + tag + "\" tag:", taglist.toString()));
+            return gson.toJson(Map.of("Moves with the \"" + tag + "\" tag:", gmpt.toString()));
 
         } else {
             return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
@@ -388,7 +397,7 @@ public class CommandHandler {
 
     }
 
-    ArrayList<Move> sourcelist;
+    ArrayList<Move> gmps;
 
     private String getMovesPerSource(String source) {
         File moves = new File("./JSON/movesSOURCE.json");
@@ -409,9 +418,9 @@ public class CommandHandler {
                 htable = new HTable<>();
             }
 
-            sourcelist = htable.get(source);
+            gmps = htable.get(source);
 
-            return gson.toJson(Map.of("Moves with the \"" + source + "\" source:", sourcelist.toString()));
+            return gson.toJson(Map.of("Moves with the \"" + source + "\" source:", gmps.toString()));
 
         } else {
             return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
