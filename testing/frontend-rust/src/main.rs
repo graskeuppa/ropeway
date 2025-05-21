@@ -22,7 +22,8 @@ fn main() -> anyhow::Result<()> {
     let mut reader = BufReader::new(stdout);
 
     // Writes the command to the backend
-    writeln!(stdin, "MAKE_MOVE_AL 2025-05-16 120 POK CSH")?;
+    //writeln!(stdin, "MAKE_MOVE 2025-05-16 120 POK CSH")?;
+    writeln!(stdin, "GET_MOVES_PER_DATE 2025-05-16")?;
 
     // Reads the backend's answer
     let mut response = String::new();

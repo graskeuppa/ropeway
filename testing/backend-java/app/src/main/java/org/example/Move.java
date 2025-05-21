@@ -14,4 +14,11 @@ public class Move {
         this.tag = tag;
         this.source = source;
     }
+
+    public String toString() {
+        String identifier = "Move: date: " + this.date + ", amount: " + this.amount + ", tag: " + this.tag
+                + ", source: " + this.source;
+        return identifier;
+    }
+
 }

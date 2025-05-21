@@ -358,8 +358,8 @@ public class CommandHandler {
                 tree = new AVL<>();
             }
 
-            gmpd = tree.search(Integer.parseInt(date.replace("-", " ")));
-            return gson.toJson(Map.of("Moves made on" + date, gmpd.toString()));
+            gmpd = tree.search(Integer.parseInt(date.replace("-", "")));
+            return gson.toJson(Map.of("Moves made on " + date, gmpd.toString()));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
