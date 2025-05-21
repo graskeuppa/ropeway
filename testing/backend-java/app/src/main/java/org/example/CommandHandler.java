@@ -109,13 +109,60 @@ public class CommandHandler {
                 return getMovesPerSourceBetween(segments[1], segments[2], segments[3]);
             // --------------------------------------------------------------------------------------------
 
+            // --------------------------------------------------------------------------------------------
+            // Calls getMovesPerTagIn (returns all moves made in the given date)
+            case "GET_MOVES_PER_TAG_IN":
+                // GET_MOVES_PER_TAG_IN <tag> <date>
+                if (segments.length < 2)
+                    return gson.toJson(Map.of("Command err",
+                            "Missing arguments, yo! - Expected: GET_MOVES_PER_TAG_IN -tag- -date-"));
+
+                return getMovesPerTagIn(segments[1], segments[2]);
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
+            // Calls getMovesPerTagIn (returns all moves made in the given date)
+            case "GET_MOVES_PER_SOURCE_IN":
+                // GET_MOVES_PER_TAG_IN <tag> <date>
+                if (segments.length < 2)
+                    return gson.toJson(Map.of("Command err",
+                            "Missing arguments, yo! - Expected: GET_MOVES_PER_SOURCE_IN -source- -date-"));
+
+                return getMovesPerSourceIn(segments[1], segments[2]);
+            // --------------------------------------------------------------------------------------------
+
             // MORE COMMANDS HERE!
-            // case "GET_MOVES_PER_SOURCE_BETWEEN":
 
             default: // Given command does not exist
                 return gson.toJson(Map.of("Wrong command err", "No such command, yo!"));
 
         }
+    }
+
+    private String getMovesPerTagIn(String tag, String date) {
+        getMovesPerDate(date);
+        ArrayList<Move> moves = dataList;
+
+        for (Move move : moves) {
+            getMovesPerTag(move.tag);
+        }
+
+        return gson.toJson(Map.of("Moves with the \"" + tag + "\" tag made on " + date
+                + ":", taglist.toString()));
+
+    }
+
+    private String getMovesPerSourceIn(String source, String date) {
+        getMovesPerDate(date);
+        ArrayList<Move> moves = dataList;
+
+        for (Move move : moves) {
+            getMovesPerSource(move.tag);
+        }
+
+        return gson.toJson(Map.of("Moves with the \"" + source + "\" source made on " + date
+                + ":", sourcelist.toString()));
+
     }
 
     private String getMovesPerSourceBetween(String source, String d1, String d2) {
@@ -280,6 +327,9 @@ public class CommandHandler {
         }
     }
 
+    // Declarado por fuera para poder acceder al campo en métodos compuestos.
+    ArrayList<Move> dataList;
+
     private String getMovesPerDate(String date) {
         File moves = new File("./JSON/movesDATE.json");
         moves.getParentFile().mkdirs();
@@ -299,13 +349,15 @@ public class CommandHandler {
                 tree = new AVL<>();
             }
 
-            ArrayList<Move> dataList = tree.search(Integer.parseInt(date.replace("-", " ")));
+            dataList = tree.search(Integer.parseInt(date.replace("-", " ")));
             return gson.toJson(Map.of("Moves made on" + date, dataList.toString()));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
     }
+
+    ArrayList<Move> taglist;
 
     private String getMovesPerTag(String tag) {
         File moves = new File("./JSON/movesTAG.json");
@@ -326,7 +378,7 @@ public class CommandHandler {
                 htable = new HTable<>();
             }
 
-            ArrayList<Move> taglist = htable.get(tag);
+            taglist = htable.get(tag);
 
             return gson.toJson(Map.of("Moves with the \"" + tag + "\" tag:", taglist.toString()));
 
@@ -335,6 +387,8 @@ public class CommandHandler {
         }
 
     }
+
+    ArrayList<Move> sourcelist;
 
     private String getMovesPerSource(String source) {
         File moves = new File("./JSON/movesSOURCE.json");
@@ -355,7 +409,7 @@ public class CommandHandler {
                 htable = new HTable<>();
             }
 
-            ArrayList<Move> sourcelist = htable.get(source);
+            sourcelist = htable.get(source);
 
             return gson.toJson(Map.of("Moves with the \"" + source + "\" source:", sourcelist.toString()));
 
