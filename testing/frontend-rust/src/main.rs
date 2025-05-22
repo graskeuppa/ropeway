@@ -23,7 +23,7 @@ fn main() -> anyhow::Result<()> {
 
     // Writes the command to the backend
     //writeln!(stdin, "MAKE_MOVE 2025-05-16 120 POK CSH")?;
-    writeln!(stdin, "GET_MOVES_PER_DATE 2025-05-16")?;
+    writeln!(stdin, "MAKE_MOVE 2025-06-12 2391 POK CREDT")?;
 
     // Reads the backend's answer
     let mut response = String::new();
