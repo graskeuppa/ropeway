@@ -369,6 +369,7 @@ public class CommandHandler {
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
+
     }
 
     private String getMovesPerDate(String date) {
@@ -396,6 +397,7 @@ public class CommandHandler {
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
+
     }
 
     private String getMovesPerTag(String tag) {

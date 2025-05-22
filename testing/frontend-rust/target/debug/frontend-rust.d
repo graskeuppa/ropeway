@@ -1,1 +1,1 @@
-/home/bollas/ropeway/testing/frontend-rust/target/debug/frontend-rust: /home/bollas/ropeway/testing/frontend-rust/src/main.rs
+/home/bollas/ropeway/testing/frontend-rust/target/debug/frontend-rust: /home/bollas/ropeway/testing/frontend-rust/src/app.rs /home/bollas/ropeway/testing/frontend-rust/src/commands.rs /home/bollas/ropeway/testing/frontend-rust/src/main.rs /home/bollas/ropeway/testing/frontend-rust/src/ui.rs
