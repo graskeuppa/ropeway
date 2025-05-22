@@ -27,7 +27,7 @@ public class CommandHandler {
 
             // --------------------------------------------------------------------------------------------
             // Creates a new instance of Move, adds it to an ArrayList
-            case "MAKE_MOVE_AL":
+            case "/makemove_al":
                 // MAKE_MOVE_AL <date> <amount> <tag> <source>
                 if (segments.length < 5)
                     return gson.toJson(Map.of("Command err",
@@ -38,7 +38,7 @@ public class CommandHandler {
             // --------------------------------------------------------------------------------------------
             // Creates a new move, adds it to three separate data structures for ease of
             // searching. These files will later be used for combined searches.
-            case "MAKE_MOVE":
+            case "/makemove":
                 // MAKE_MOVE <date> <amount> <tag> <source>
                 if (segments.length < 5)
                     return gson.toJson(Map.of("Command err",
@@ -48,7 +48,7 @@ public class CommandHandler {
 
             // --------------------------------------------------------------------------------------------
             // Calls getMovesPerDate (returns all the moves associated with the given date)
-            case "GET_MOVES_PER_DATE":
+            case "/getmovesperdate":
                 // GET_DATE <yyyy-mm-dd> or whatever format is placed in, so long as it is
                 // consistent and uses any non numerical symbol to separate the date numbers.
                 if (segments.length < 2)
@@ -58,28 +58,38 @@ public class CommandHandler {
 
             // --------------------------------------------------------------------------------------------
             // Calls getMovesPerTag (returns all moves associated with the given tag)
-            case "GET_MOVES_PER_TAG":
+            case "/getmovespertag":
                 // GET_MOVES_PER_TAG <tag>
-                if (segments.length < 2)
-                    return gson.toJson(Map.of("Command err", "No tag, yo! - Expected: GET_MOVES_PER_TAG -tag-"));
-                return getMovesPerTag(segments[1]);
+                try {
+                    if (segments.length < 2)
+                        return gson.toJson(Map.of("Command err", "No tag, yo! - Expected: GET_MOVES_PER_TAG -tag-"));
+                    return getMovesPerTag(segments[1]);
 
-            // --------------------------------------------------------------------------------------------
+                } catch (Exception e) {
+                    return gson.toJson(Map.of("No moves err", "There are no moves with that tag yet, yo!"));
+                }
+                // --------------------------------------------------------------------------------------------
 
-            // --------------------------------------------------------------------------------------------
-            // Calls getMovesPerSource, returns all moves associated with the given source)
-            case "GET_MOVES_PER_SOURCE":
+                // --------------------------------------------------------------------------------------------
+                // Calls getMovesPerSource, returns all moves associated with the given source)
+            case "/getmovespersource":
                 // GET_MOVES_PER_SOURCE <source>
-                if (segments.length < 2)
-                    return gson
-                            .toJson(Map.of("Command err", "No source, yo! - Expected: GET_MOVES_PER_SOURCE -source-"));
-                return getMovesPerSource(segments[1]);
-            // --------------------------------------------------------------------------------------------
+                try {
+                    if (segments.length < 2)
+                        return gson
+                                .toJson(Map.of("Command err",
+                                        "No source, yo! - Expected: GET_MOVES_PER_SOURCE -source-"));
+                    return getMovesPerSource(segments[1]);
 
-            // --------------------------------------------------------------------------------------------
-            // Calls getMovesBetween (returns a list of Pairs, the first element of each
-            // pair is the date and the second the list of moves associated with it)
-            case "GET_MOVES_BETWEEN":
+                } catch (Exception e) {
+                    return gson.toJson(Map.of("No moves err", "There are no moves with that source yet, yo!"));
+                }
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Calls getMovesBetween (returns a list of Pairs, the first element of each
+                // pair is the date and the second the list of moves associated with it)
+            case "/getmovesbetween":
                 // GET_MOVES_BETWEEN <date1> <date2>
                 if (segments.length < 3)
                     return gson.toJson(Map.of("Command err",
@@ -90,30 +100,42 @@ public class CommandHandler {
             // --------------------------------------------------------------------------------------------
             // Calls getMovesPerTagBetween (returns all moves associated with the tag within
             // the given dates)
-            case "GET_MOVES_PER_TAG_BETWEEN":
+            case "/getmptbtw":
                 // GET_MOVES_PER_TAG_BETWEEN <tag> <date1> <date2>
-                if (segments.length < 4)
-                    return gson.toJson(Map.of("Command err",
-                            "Missing arguments, yo! - Expected: GET_MOVES_PER_TAG_BETWEEN -tag- -date1- -date2-"));
-                return getMovesPerTagBetween(segments[1], segments[2], segments[3]);
-            // --------------------------------------------------------------------------------------------
+                try {
+                    if (segments.length < 4)
+                        return gson.toJson(Map.of("Command err",
+                                "Missing arguments, yo! - Expected: GET_MOVES_PER_TAG_BETWEEN -tag- -date1- -date2-"));
+                    return getMovesPerTagBetween(segments[1], segments[2], segments[3]);
 
-            // --------------------------------------------------------------------------------------------
-            // Calls getMovesPerTagBetween (returns all moves associated with the tag within
-            // the given dates)
-            case "GET_MOVES_PER_SOURCE_BETWEEN":
+                } catch (Exception e) {
+                    return gson.toJson(
+                            Map.of("No moves err", "There are no moves with that tag within the specified range, yo!"));
+                }
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Calls getMovesPerTagBetween (returns all moves associated with the tag within
+                // the given dates)
+            case "/getmpsbtw":
                 // GET_MOVES_PER_SOURCE_BETWEEN <source> <date1> <date2>
-                if (segments.length < 4)
-                    return gson.toJson(Map.of("Command err",
-                            "Missing arguments, yo! - Expected: GET_MOVES_PER_SOURCE_BETWEEN -source- -date1- -date2-"));
-                return getMovesPerSourceBetween(segments[1], segments[2], segments[3]);
-            // --------------------------------------------------------------------------------------------
+                try {
+                    if (segments.length < 4)
+                        return gson.toJson(Map.of("Command err",
+                                "Missing arguments, yo! - Expected: GET_MOVES_PER_SOURCE_BETWEEN -source- -date1- -date2-"));
+                    return getMovesPerSourceBetween(segments[1], segments[2], segments[3]);
 
-            // --------------------------------------------------------------------------------------------
-            // Calls getMovesPerTagIn (returns all moves made in the given date)
-            case "GET_MOVES_PER_TAG_IN":
+                } catch (Exception e) {
+                    return gson.toJson(
+                            Map.of("No moves err", "There are no moves with that tag within the specified range, yo!"));
+                }
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Calls getMovesPerTagIn (returns all moves made in the given date)
+            case "/getmptin":
                 // GET_MOVES_PER_TAG_IN <tag> <date>
-                if (segments.length < 2)
+                if (segments.length < 3)
                     return gson.toJson(Map.of("Command err",
                             "Missing arguments, yo! - Expected: GET_MOVES_PER_TAG_IN -tag- -date-"));
 
@@ -121,10 +143,10 @@ public class CommandHandler {
             // --------------------------------------------------------------------------------------------
 
             // --------------------------------------------------------------------------------------------
-            // Calls getMovesPerTagIn (returns all moves made in the given date)
-            case "GET_MOVES_PER_SOURCE_IN":
-                // GET_MOVES_PER_TAG_IN <tag> <date>
-                if (segments.length < 2)
+            // Calls getMovesPerSourceIn (returns all moves made in the given date)
+            case "/getmpsin":
+                // GET_MOVES_PER_SOURCE_IN <source> <date>
+                if (segments.length < 3)
                     return gson.toJson(Map.of("Command err",
                             "Missing arguments, yo! - Expected: GET_MOVES_PER_SOURCE_IN -source- -date-"));
 
@@ -132,6 +154,7 @@ public class CommandHandler {
             // --------------------------------------------------------------------------------------------
 
             // MORE COMMANDS HERE!
+            // case nuke:
 
             default: // Given command does not exist
                 return gson.toJson(Map.of("Wrong command err", "No such command, yo!"));
@@ -139,7 +162,12 @@ public class CommandHandler {
         }
     }
 
+    // Lists that are accessed in many methods, instanciated here for ease of
+    // access.
     ArrayList<Pir<Integer, ArrayList<Move>>> gmb;
+    ArrayList<Move> gmpd;
+    ArrayList<Move> gmpt;
+    ArrayList<Move> gmps;
 
     private String getMovesPerTagIn(String tag, String date) {
 
@@ -147,11 +175,13 @@ public class CommandHandler {
 
         getMovesPerDate(date);
         for (Move move : gmpd) {
-            getMovesPerTag(move.tag);
-            temp.addAll(gmpt);
+            if (tag == move.tag) {
+                getMovesPerTag(move.tag);
+                temp.addAll(gmpt);
+            }
         }
 
-        return gson.toJson(Map.of("Moves with the \"" + tag + "\" tag made on " + date
+        return gson.toJson(Map.of("Moves with the " + tag + " tag made on " + date
                 + ":", temp.toString()));
 
     }
@@ -161,18 +191,21 @@ public class CommandHandler {
         ArrayList<Move> temp = new ArrayList<>();
 
         getMovesPerDate(date);
-        for (Move move : gmps) {
-            getMovesPerSource(move.source);
-            temp.addAll(gmps);
+        for (Move move : gmpd) {
+            if (source == move.source) {
+                getMovesPerSource(move.source);
+                temp.addAll(gmps);
+            }
         }
 
-        return gson.toJson(Map.of("Moves with the \"" + source + "\" source made on " + date
+        return gson.toJson(Map.of("Moves with the " + source + " source made on " + date
                 + ":", temp.toString()));
 
     }
 
     // TODO: Modificar la implementación para usar el campo de gmb declarado por
     // fuera del método
+    // TODO: Además, siempre regresa movimientos, eso está raro.
     private String getMovesPerSourceBetween(String source, String d1, String d2) {
 
         // File location
@@ -184,8 +217,8 @@ public class CommandHandler {
         movesS.getParentFile().mkdirs();
         HTable<String, Move> htable;
 
-        int date1 = Integer.parseInt(d1);
-        int date2 = Integer.parseInt(d2);
+        int date1 = Integer.parseInt(d1.trim().replaceAll("-", ""));
+        int date2 = Integer.parseInt(d2.trim().replaceAll("-", ""));
 
         // It's technically impossible for just one of them to exist, since makeMove
         // makes both of them at the same time.
@@ -241,6 +274,7 @@ public class CommandHandler {
 
     // TODO: Modificar la implementación para usar el campo de gmb declarado por
     // fuera del método
+    // TODO: Además, siempre regresa movimientos, eso está raro.
     private String getMovesPerTagBetween(String tag, String d1, String d2) {
 
         // File location
@@ -252,8 +286,8 @@ public class CommandHandler {
         movesT.getParentFile().mkdirs();
         HTable<String, Move> htable;
 
-        int date1 = Integer.parseInt(d1);
-        int date2 = Integer.parseInt(d2);
+        int date1 = Integer.parseInt(d1.trim().replaceAll("-", ""));
+        int date2 = Integer.parseInt(d2.trim().replaceAll("-", ""));
 
         // It's technically impossible for just one of them to exist, since makeMove
         // makes both of them at the same time.
@@ -311,8 +345,8 @@ public class CommandHandler {
         moves.getParentFile().mkdirs();
         AVL<Move> tree;
 
-        int date1 = Integer.parseInt(d1);
-        int date2 = Integer.parseInt(d2);
+        int date1 = Integer.parseInt(d1.trim().replaceAll("-", ""));
+        int date2 = Integer.parseInt(d2.trim().replaceAll("-", ""));
 
         if (moves.exists()) {
 
@@ -330,14 +364,12 @@ public class CommandHandler {
 
             gmb = tree.getBetween(date1, date2);
 
-            return gson.toJson(Map.of("Moves made between " + date1 + " and " + date2 + ":", gmb.toString()));
+            return gson.toJson(Map.of("Moves made between " + d1 + " and " + d2 + ":", gmb.toString()));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
     }
-
-    ArrayList<Move> gmpd;
 
     private String getMovesPerDate(String date) {
         File moves = new File("./JSON/movesDATE.json");
@@ -365,8 +397,6 @@ public class CommandHandler {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
     }
-
-    ArrayList<Move> gmpt;
 
     private String getMovesPerTag(String tag) {
         File moves = new File("./JSON/movesTAG.json");
@@ -396,8 +426,6 @@ public class CommandHandler {
         }
 
     }
-
-    ArrayList<Move> gmps;
 
     private String getMovesPerSource(String source) {
         File moves = new File("./JSON/movesSOURCE.json");

@@ -57,6 +57,11 @@ public class AVL<T> {
             return this.list;
         }
 
+        public String toString() {
+            String identifier = "Pair: Id = " + this.identifier + ", List = " + this.list;
+            return identifier;
+        }
+
     }
 
     // ---------------------------------- (Inicio de métodos de legado)
