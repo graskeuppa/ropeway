@@ -1,6 +1,6 @@
 use std::{
     env,
-    io::{BufReader, Read},
+    io::{BufReader, Read, Write},
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -24,19 +24,28 @@ pub fn run_java_command(argument: &str) -> Result<String, String> {
     let mut child = Command::new("java")
         .arg("-jar")
         .arg(&jar_path)
-        .arg(argument)
-        .current_dir(work_dir)
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
+        .current_dir(work_dir)
         .spawn()
-        .map_err(|e| format!("Somethin went wrong, yo!: {}", e))?;
+        .map_err(|e| format!("Something went wrong, yo!: {}", e))?;
+
+    //  Write the command and a new line to Java through the stdin
+    if let Some(mut stdin) = child.stdin.take() {
+        writeln!(stdin, "{}", argument)
+            .map_err(|e| format!("Something went wrong with writing the stdin, yo!: {}", e))?;
+    }
 
     // Read the stdout
-    let stdout = child.stdout.take().ok_or("No se pudo capturar stdout")?;
+    let stdout = child.stdout.take().ok_or("Couldn't get the stdout, yo!")?;
     let mut reader = BufReader::new(stdout);
     let mut output = String::new();
     reader
         .read_to_string(&mut output)
         .map_err(|e| format!("Error al leer salida: {}", e))?;
+
+    // Wait for the child to finish
+    let _ = child.wait();
 
     Ok(output)
 }

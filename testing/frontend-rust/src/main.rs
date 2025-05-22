@@ -14,6 +14,7 @@ use crossterm::{
 use ratatui::{Terminal, backend::CrosstermBackend};
 use std::io;
 
+// Entrance
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // LET IT RIPPPP
     enable_raw_mode()?;
@@ -62,9 +63,12 @@ fn run_app(
                     KeyCode::Char('q') => app.quit(),
                     // Send the command to the backend
                     KeyCode::Enter => {
-                        match run_java_command(&app.input) {
-                            Ok(salida) => app.output = salida,
-                            Err(e) => app.output = format!("Error: {}", e),
+                        // Only calls the backend if the input isn't empty
+                        if !app.input.trim().is_empty() {
+                            match run_java_command(&app.input) {
+                                Ok(salida) => app.output = salida,
+                                Err(e) => app.output = format!("Error: {}", e),
+                            }
                         }
                         app.input.clear(); // Flush the input once that's done
                     }

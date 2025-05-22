@@ -1,12 +1,13 @@
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
-    widgets::{Block, Borders, Paragraph},
+    style::Stylize,
+    widgets::{self, Block, Borders, Paragraph},
 };
 
 use crate::app::App;
 
-// Rendering function
+// Draws the UI, prompt on the upper part, output below
 pub fn draw(f: &mut Frame, app: &App) {
     // Divide terminal in two blocks
     let chunks = Layout::default()
@@ -17,11 +18,11 @@ pub fn draw(f: &mut Frame, app: &App) {
 
     // Widget for input
     let input = Paragraph::new(app.input.as_str())
-        .block(Block::default().title("Entrada").borders(Borders::ALL));
+        .block(Block::default().title("Input").borders(Borders::ALL));
     f.render_widget(input, chunks[0]);
 
     // Widget for output
     let output = Paragraph::new(app.output.as_str())
-        .block(Block::default().title("Salida").borders(Borders::ALL));
+        .block(Block::default().title("Output").borders(Borders::ALL));
     f.render_widget(output, chunks[1]);
 }

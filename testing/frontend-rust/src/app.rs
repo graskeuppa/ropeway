@@ -13,7 +13,20 @@ impl App {
         // Constructor
         Self {
             input: String::new(),
-            output: String::new(),
+            output: String::from(
+                r"     
+    ________   ____  ___ _      ______  __  __
+   / ___/ __ \/ __ \/ _ \ | /| / / __ `/ / / /
+  / /  / /_/ / /_/ /  __/ |/ |/ / /_/ / /_/ /
+ /_/   \____/ .___/\___/|__/|__/\__,_/\__, /
+           /_/                       /____/ (0.1.0-alpha.1)
+
+Welcome to ropeway!
+
+If you´re unsure of what to do, run '/help' to see a list of all available commands.
+
+           ",
+            ),
             should_quit: false,
         }
     }
