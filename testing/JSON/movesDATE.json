@@ -1,1 +1,1 @@
-{"root":{"key":13082025,"height":2,"dataList":[{"date":"13-08-2025","amount":240.0,"tag":"MEL","source":"CASHB"}],"right":{"key":23302012,"height":1,"dataList":[{"date":"23-30-2012","amount":324.0,"tag":"EMI","source":"CASHB"}]}}}
+{"root":{"key":22052025,"height":2,"dataList":[{"date":"22-05-2025","amount":500.0,"tag":"TPT","source":"CREDT"}],"left":{"key":13082025,"height":1,"dataList":[{"date":"13-08-2025","amount":240.0,"tag":"MEL","source":"CASHB"}]},"right":{"key":23302012,"height":1,"dataList":[{"date":"23-30-2012","amount":324.0,"tag":"EMI","source":"CASHB"}]}}}

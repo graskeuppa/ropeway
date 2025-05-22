@@ -25,6 +25,47 @@ public class CommandHandler {
 
         switch (command) {
 
+            case "/help":
+                // Returns a list of all commands along with a simple description for each of
+                // them
+                String help = "-----------------------\n\n"
+                        + "ropeway is a financial micro-management application designed to help keep a comprehensible record of all things money.\n\n"
+                        +
+                        "-----------------------\n\n" +
+                        "About Moves:\n" +
+                        "Each transaction is refered to as 'Move' within ropeway, they consist of:\n" +
+                        "- Date: You are free to choose the format of the date. I recommend using <yyyy-mm-dd>.\n"
+                        +
+                        "- Amount: A floating point number that can either be positive or negative\n" +
+                        "- Tag: The tag is meant to contain the nature of the Move. Although it's recommend to keep tags simple, they can be of any size. \n"
+                        +
+                        "By default, ropeway has special handling for tags of length 3 (for example, 'MEL' which abbreviates 'meal', or 'TPT', which abbreviates 'transport').\n"
+                        +
+                        "- Source: Where is the money coming from. By default, ropeway has special handling for source of length 3 or 5, but there is nothing stoping you from typing more or less than that.\n"
+                        +
+                        "It's really important to be consistent with date, tag and source formating, not doing so will render moves incompatible for fetching operations.\n\n"
+                        +
+                        "-----------------------\n\n" +
+
+                        "The current version of ropeway is very barebones and supports only creation and fetching operations, though more interesting functions are planned for future releases :). \n\n"
+                        + "To interact with ropeway, type any of the following commands in the format '/command'\n"
+                        +
+                        "List of commands: \n" +
+                        "- /makemove <date> <amount> <tag> <source>: Makes a Move.\n" +
+                        "- /getmovesperdate <date>: Returns all moves associated with the given date.\n" +
+                        "- /getmovesbetween <date1> <date2>: Returns all moves contained within two dates.\n" +
+                        "- /getmovespertag <tag>: Returns all moves associated with the given tag.\n" +
+                        "- /getmovespersource <source>: Returns all moves associated with the given source.\n" +
+                        "- /getmptbtw <tag> <date1> <date2>: Returns all moves associated with the given tag between the two given dates.\n"
+                        +
+
+                        "- /getmpsbtw <source> <date1> <date2>: Returns all moves associated with the given source between the two given dates.\n"
+                        +
+                        "- /getmptin <tag> <date>: Returns all moves associated with the given tag in the given date.\n"
+                        +
+                        "- /getmpsin <source> <date>: Returns all moves associated with the given source in the given date.\n";
+                return help;
+
             // --------------------------------------------------------------------------------------------
             // Creates a new instance of Move, adds it to an ArrayList
             case "/makemove_al":
@@ -32,12 +73,17 @@ public class CommandHandler {
                 if (segments.length < 5)
                     return gson.toJson(Map.of("Command err",
                             "Not enough arguments, yo! - Expected: MAKE_MOVE_AL -date- -amount- -tag- -source-"));
-                return makeMoveAL(segments);
-            // --------------------------------------------------------------------------------------------
+                try {
+                    return makeMoveAL(segments);
+                } catch (Exception e) {
+                    return gson.toJson(Map.of("Command err", "Mismatched types, yo!"));
+                }
 
-            // --------------------------------------------------------------------------------------------
-            // Creates a new move, adds it to three separate data structures for ease of
-            // searching. These files will later be used for combined searches.
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Creates a new move, adds it to three separate data structures for ease of
+                // searching. These files will later be used for combined searches.
             case "/makemove":
                 // MAKE_MOVE <date> <amount> <tag> <source>
                 if (segments.length < 5)
@@ -527,6 +573,14 @@ public class CommandHandler {
         // This will come in handy later for search combinations such as "All moves with
         // x tag made during (n,a) period of time, or "All moves with x source of money
         // made during (t,o) period, etc."
+
+        try {
+            Integer.parseInt(arguments[1].trim().replaceAll("-", ""));
+            Double.parseDouble(arguments[2]);
+
+        } catch (Exception e) {
+            return gson.toJson(Map.of("Arguments err", "Mismatched types, yo!"));
+        }
 
         File movesTAG = new File("./JSON/movesTAG.json");
         movesTAG.getParentFile().mkdirs();
