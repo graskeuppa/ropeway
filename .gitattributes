@@ -1,0 +1,4 @@
+# Ignorar todos los Makefiles en el cálculo de estadísticas
+**/Makefile linguist-generated=true
+**/*.mk    linguist-generated=true
+
