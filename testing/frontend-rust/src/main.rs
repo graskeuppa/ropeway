@@ -7,7 +7,7 @@ use crate::commands::run_java_command;
 use crate::ui::draw;
 
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers},
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
@@ -59,14 +59,21 @@ fn run_app(
         if event::poll(std::time::Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    // q to exit
-                    KeyCode::Char('q') => app.quit(),
+                    // q to exit, arrows to scroll up or down
+                    KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        app.quit();
+                    }
+                    KeyCode::Up => app.scroll_up(),
+                    KeyCode::Down => app.scroll_down(),
                     // Send the command to the backend
                     KeyCode::Enter => {
                         // Only calls the backend if the input isn't empty
                         if !app.input.trim().is_empty() {
                             match run_java_command(&app.input) {
-                                Ok(salida) => app.output = salida,
+                                Ok(output) => {
+                                    app.output = output;
+                                    app.scroll = 0;
+                                }
                                 Err(e) => app.output = format!("Error: {}", e),
                             }
                         }

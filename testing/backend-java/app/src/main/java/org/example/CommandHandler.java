@@ -25,6 +25,19 @@ public class CommandHandler {
 
         switch (command) {
 
+            case "/splash":
+
+                String version = "(0.1.0-alpha.1)";
+                String splash = "    ________   ____  ___ _      ______  __  __\n" +
+                        "   / ___/ __ \\/ __ \\/ _ \\ | /| / / __ `/ / / /\n" +
+                        "  / /  / /_/ / /_/ /  __/ |/ |/ / /_/ / /_/ / \n" +
+                        " /_/   \\____/ .___/\\___/|__/|__/\\__,_/\\__, /  \n" +
+                        "           /_/                       /____/" + version + "\n" +
+
+                        "Welcome to ropeway!\n" +
+
+                        "If you´re unsure of what to do, run '/help' to see a list of all available commands.\n";
+                return splash;
             case "/help":
                 // Returns a list of all commands along with a simple description for each of
                 // them
@@ -48,9 +61,12 @@ public class CommandHandler {
                         "-----------------------\n\n" +
 
                         "The current version of ropeway is very barebones and supports only creation and fetching operations, though more interesting functions are planned for future releases :). \n\n"
-                        + "To interact with ropeway, type any of the following commands in the format '/command'\n"
+                        + "To interact with ropeway, type any of the following commands in the format '/command'\n\n"
                         +
                         "List of commands: \n" +
+
+                        "- /splash: Shows the first screen you see when launching ropeway.\n" +
+                        "- /help: Brings you to this screen!.\n" +
                         "- /makemove <date> <amount> <tag> <source>: Makes a Move.\n" +
                         "- /getmovesperdate <date>: Returns all moves associated with the given date.\n" +
                         "- /getmovesbetween <date1> <date2>: Returns all moves contained within two dates.\n" +
@@ -214,21 +230,24 @@ public class CommandHandler {
     ArrayList<Move> gmpd;
     ArrayList<Move> gmpt;
     ArrayList<Move> gmps;
+    public boolean found;
 
     private String getMovesPerTagIn(String tag, String date) {
 
         ArrayList<Move> temp = new ArrayList<>();
 
-        getMovesPerDate(date);
+        // Populates the nondeclared list with the moves made per date, meaning gmpd is
+        // full of elements rn
+        getMovesPerDateVOID(date);
+
         for (Move move : gmpd) {
-            if (tag == move.tag) {
-                getMovesPerTag(move.tag);
-                temp.addAll(gmpt);
+            if (tag.equals(move.tag)) {
+                temp.add(move);
+
             }
         }
-
-        return gson.toJson(Map.of("Moves with the " + tag + " tag made on " + date
-                + ":", temp.toString()));
+        // return temp.toString();
+        return gson.toJson(Map.of("Moves with the " + tag + " tag made on " + date + ":", temp));
 
     }
 
@@ -236,81 +255,51 @@ public class CommandHandler {
 
         ArrayList<Move> temp = new ArrayList<>();
 
-        getMovesPerDate(date);
+        getMovesPerDateVOID(date);
         for (Move move : gmpd) {
-            if (source == move.source) {
-                getMovesPerSource(move.source);
-                temp.addAll(gmps);
+            if (source.equals(move.source)) {
+                temp.add(move);
             }
         }
-
         return gson.toJson(Map.of("Moves with the " + source + " source made on " + date
-                + ":", temp.toString()));
+                + ":", temp));
 
     }
 
-    // TODO: Modificar la implementación para usar el campo de gmb declarado por
-    // fuera del método
-    // TODO: Además, siempre regresa movimientos, eso está raro.
     private String getMovesPerSourceBetween(String source, String d1, String d2) {
 
-        // File location
-        File movesD = new File("./JSON/movesDATE.json");
-        movesD.getParentFile().mkdirs();
-        AVL<Move> tree;
+        // 1. We get the moves made bewteen d1 and d2.
+        // 1.5 The method getBetween from the trees gives back an ArrayList of Pairs
+        // 1.6 Each pir has as its second generic caracterization an ArrayList<Move>
+        // 1.7 Pir has implemented a method for returning just this list.
+        // 1.8 I'll make a new ArralyList<Move> and for each ArrayList of the pir, I'll
+        // add everything to the new, flat ArrayList.
+        // 2. For each element in that list, we compare their source to the one that is
+        // given to the functions
+        // 3. We add only the moves that share that source!
+        // // Voilá!
 
-        File movesS = new File("./JSON/movesSOURCE.json");
-        movesS.getParentFile().mkdirs();
-        HTable<String, Move> htable;
+        // This populates gmb
+        getMovesBetweenVOID(d1, d2);
 
-        int date1 = Integer.parseInt(d1.trim().replaceAll("-", ""));
-        int date2 = Integer.parseInt(d2.trim().replaceAll("-", ""));
+        if (found == true) {
+            // It is currently ArrayList<Pir<Integer, ArrayList<Move>>>
 
-        // It's technically impossible for just one of them to exist, since makeMove
-        // makes both of them at the same time.
-        if (movesD.exists() && movesS.exists()) {
+            ArrayList<Move> temp1 = new ArrayList<>();
+            ArrayList<Move> temp2 = new ArrayList<>();
 
-            try (Reader reader1 = new FileReader(movesD);
-                    Reader reader2 = new FileReader(movesS);) {
+            for (Pir<Integer, ArrayList<Move>> pir : gmb) {
+                temp1.addAll(pir.returnList());
+            }
 
-                tree = gson.fromJson(reader1, new TypeToken<AVL<Move>>() {
-                }.getType());
-                htable = gson.fromJson(reader2, new TypeToken<HTable<String, Move>>() {
-                }.getType());
-
-                if (tree == null && htable == null) {
-                    tree = new AVL<>();
-                    htable = new HTable<>();
+            for (Move move : temp1) {
+                if (source.equals(move.source)) {
+                    temp2.add(move);
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                tree = new AVL<>();
-                htable = new HTable<>();
             }
 
-            // Get all the moves betweem two dates
-            ArrayList<Pir<Integer, ArrayList<Move>>> moveList = tree.getBetween(date1, date2);
-
-            // New list for storing all the moves
-            ArrayList<ArrayList<Move>> sources1 = new ArrayList<>();
-            for (Pir<Integer, ArrayList<Move>> pir : moveList) {
-                sources1.add(pir.returnList());
-            }
-
-            // Flattening the ArrayList
-            ArrayList<Move> sources2 = new ArrayList<>();
-            for (ArrayList<Move> sublist : sources1) {
-                sources2.addAll(sublist);
-            }
-
-            // Getting the moves with the associated tag
-            ArrayList<Move> sources3 = htable.get(source);
-
-            return gson.toJson(Map.of(
-                    "Moves made between " + date1 + " and " + date2 + " associated with the \"+" + source
-                            + "\" source:",
-                    sources3.toString()));
+            return gson.toJson(
+                    Map.of("Moves with the source " + source + " made between " + d1 + " and " + d2 + ":", temp2));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
@@ -318,75 +307,46 @@ public class CommandHandler {
 
     }
 
-    // TODO: Modificar la implementación para usar el campo de gmb declarado por
-    // fuera del método
-    // TODO: Además, siempre regresa movimientos, eso está raro.
     private String getMovesPerTagBetween(String tag, String d1, String d2) {
 
-        // File location
-        File movesD = new File("./JSON/movesDATE.json");
-        movesD.getParentFile().mkdirs();
-        AVL<Move> tree;
+        getMovesBetweenVOID(d1, d2);
 
-        File movesT = new File("./JSON/movesTAG.json");
-        movesT.getParentFile().mkdirs();
-        HTable<String, Move> htable;
+        if (found == true) {
 
-        int date1 = Integer.parseInt(d1.trim().replaceAll("-", ""));
-        int date2 = Integer.parseInt(d2.trim().replaceAll("-", ""));
+            ArrayList<Move> temp1 = new ArrayList<>();
+            ArrayList<Move> temp2 = new ArrayList<>();
 
-        // It's technically impossible for just one of them to exist, since makeMove
-        // makes both of them at the same time.
-        if (movesD.exists() && movesT.exists()) {
+            for (Pir<Integer, ArrayList<Move>> pir : gmb) {
+                temp1.addAll(pir.returnList());
+            }
 
-            try (Reader reader1 = new FileReader(movesD);
-                    Reader reader2 = new FileReader(movesT);) {
-
-                tree = gson.fromJson(reader1, new TypeToken<AVL<Move>>() {
-                }.getType());
-                htable = gson.fromJson(reader2, new TypeToken<HTable<String, Move>>() {
-                }.getType());
-
-                if (tree == null && htable == null) {
-                    tree = new AVL<>();
-                    htable = new HTable<>();
+            for (Move move : temp1) {
+                if (tag.equals(move.tag)) {
+                    temp2.add(move);
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                tree = new AVL<>();
-                htable = new HTable<>();
             }
 
-            // Get all the moves within two dates
-            ArrayList<Pir<Integer, ArrayList<Move>>> moveList = tree.getBetween(date1, date2);
-
-            // New list for storing all the moves
-            ArrayList<ArrayList<Move>> tags1 = new ArrayList<>();
-            for (Pir<Integer, ArrayList<Move>> pir : moveList) {
-                tags1.add(pir.returnList());
-            }
-
-            // Flattening the ArrayList
-            ArrayList<Move> tags2 = new ArrayList<>();
-            for (ArrayList<Move> sublist : tags1) {
-                tags2.addAll(sublist);
-            }
-
-            // Getting the moves with the associated tag
-            ArrayList<Move> tags3 = htable.get(tag);
-
-            return gson.toJson(Map.of(
-                    "Moves made between " + date1 + " and " + date2 + " associated with the \"+" + tag + "\" tag:",
-                    tags3.toString()));
+            return gson.toJson(
+                    Map.of("Moves with the tag " + tag + " made between " + d1 + " and " + d2 + ":", temp2));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
-
     }
 
     private String getMovesBetween(String d1, String d2) {
+
+        getMovesBetweenVOID(d1, d2);
+
+        if (found == true) {
+            return gson.toJson(Map.of("Moves made between " + d1 + " and " + d2 + ":", gmb));
+        } else {
+            return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
+        }
+
+    }
+
+    private void getMovesBetweenVOID(String d1, String d2) {
         File moves = new File("./JSON/movesDATE.json");
         moves.getParentFile().mkdirs();
         AVL<Move> tree;
@@ -395,7 +355,7 @@ public class CommandHandler {
         int date2 = Integer.parseInt(d2.trim().replaceAll("-", ""));
 
         if (moves.exists()) {
-
+            found = true;
             try (Reader reader = new FileReader(moves)) {
                 tree = gson.fromJson(reader, new TypeToken<AVL<Move>>() {
                 }.getType());
@@ -408,9 +368,20 @@ public class CommandHandler {
                 tree = new AVL<>();
             }
 
+            // Regresa una lista de Pir
             gmb = tree.getBetween(date1, date2);
 
-            return gson.toJson(Map.of("Moves made between " + d1 + " and " + d2 + ":", gmb.toString()));
+        } else {
+            found = false;
+        }
+
+    }
+
+    private String getMovesPerDate(String date) {
+        getMovesPerDateVOID(date);
+
+        if (found == true) {
+            return gson.toJson(Map.of("Moves made on " + date, gmpd));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
@@ -418,13 +389,13 @@ public class CommandHandler {
 
     }
 
-    private String getMovesPerDate(String date) {
+    private void getMovesPerDateVOID(String date) {
         File moves = new File("./JSON/movesDATE.json");
         moves.getParentFile().mkdirs();
         AVL<Move> tree;
 
         if (moves.exists()) {
-
+            found = true;
             try (Reader reader = new FileReader(moves)) {
                 tree = gson.fromJson(reader, new TypeToken<AVL<Move>>() {
                 }.getType());
@@ -438,21 +409,32 @@ public class CommandHandler {
             }
 
             gmpd = tree.search(Integer.parseInt(date.replace("-", "")));
-            return gson.toJson(Map.of("Moves made on " + date, gmpd.toString()));
 
         } else {
-            return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
+            found = false;
         }
 
     }
 
     private String getMovesPerTag(String tag) {
+
+        getMovesPerTagVOID(tag);
+
+        if (found == true) {
+            return gson.toJson(Map.of("Moves with the " + tag + " tag:", gmpt));
+        } else {
+            return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
+        }
+
+    }
+
+    private void getMovesPerTagVOID(String tag) {
         File moves = new File("./JSON/movesTAG.json");
         moves.getParentFile().mkdirs();
         HTable<String, Move> htable;
 
         if (moves.exists()) {
-
+            found = true;
             try (Reader reader = new FileReader(moves)) {
                 htable = gson.fromJson(reader, new TypeToken<HTable<String, Move>>() {
                 }.getType());
@@ -467,21 +449,31 @@ public class CommandHandler {
 
             gmpt = htable.get(tag);
 
-            return gson.toJson(Map.of("Moves with the \"" + tag + "\" tag:", gmpt.toString()));
+        } else {
+            found = false;
+        }
 
+    }
+
+    private String getMovesPerSource(String source) {
+
+        getMovesPerSourceVOID(source);
+
+        if (found == true) {
+            return gson.toJson(Map.of("Moves with the " + source + " source:", gmps));
         } else {
             return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
         }
 
     }
 
-    private String getMovesPerSource(String source) {
+    private void getMovesPerSourceVOID(String source) {
         File moves = new File("./JSON/movesSOURCE.json");
         moves.getParentFile().mkdirs();
         HTable<String, Move> htable;
 
         if (moves.exists()) {
-
+            found = true;
             try (Reader reader = new FileReader(moves)) {
                 htable = gson.fromJson(reader, new TypeToken<HTable<String, Move>>() {
                 }.getType());
@@ -496,10 +488,8 @@ public class CommandHandler {
 
             gmps = htable.get(source);
 
-            return gson.toJson(Map.of("Moves with the \"" + source + "\" source:", gmps.toString()));
-
         } else {
-            return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
+            found = false;
         }
 
     }
@@ -612,7 +602,8 @@ public class CommandHandler {
 
             try {
                 if (movesTAG.createNewFile()) {
-                    System.out.println("File created!");
+                    String nw = "Found no existing files...";
+                    System.out.println(nw + "\n" + "New file created!: " + movesTAG.getName());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -662,7 +653,7 @@ public class CommandHandler {
 
             try {
                 if (movesSOURCE.createNewFile()) {
-                    System.out.println("File created!");
+                    System.out.println("New file created!: " + movesSOURCE.getName());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -712,7 +703,7 @@ public class CommandHandler {
             try {
 
                 if (movesDATE.createNewFile()) {
-                    System.out.println("File created, yo!");
+                    System.out.println("New file created!: " + movesDATE.getName());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -744,11 +735,7 @@ public class CommandHandler {
             e.printStackTrace();
         }
 
-        String result1 = gson.toJson(Map.of("MovesTAG", pertag));
-        String result2 = gson.toJson(Map.of("MovesSOURCE", persource));
-        String result3 = gson.toJson(Map.of("MovesDATE", perdate));
-        String results = result1 + "\n" + result2 + "\n" + result3;
-        return results;
+        return "Move saved to files! To see Moves you've made, search them using any of the provided commands!";
 
     }
 

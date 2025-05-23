@@ -27,7 +27,7 @@ public class HTable<K, V> {
     // La cantidad de cartas en todo el buzón-
     private int size;
     // ... capacidad inicial del buzón
-    private static final int INITIAL_CAPACITY = 16;
+    private static final int INITIAL_CAPACITY = 1;
     // Límite proporcional inicial de sobrecarga cartas v. cajas de correo.
     private static final double LOAD_FACTOR_THRESHOLD = 0.75;
 
@@ -195,14 +195,16 @@ public class HTable<K, V> {
 
     // PRINTTABLE: Da una representación gráfica del buzón
     public void printTable() {
+
         for (int i = 0; i < buckets.length; i++) {
-            System.out.println("Caja de correo " + i + ":");
+            System.out.println("Move " + i + ":");
             if (buckets[i] != null) {
                 for (Entry<K, V> entry : buckets[i]) {
-                    System.out.println("╰──(" + entry.key + "): " + entry.value);
+                    System.out.println("╰──(" + entry.key + "): \n" + entry.toString());
                 }
             }
             System.out.println();
         }
     }
+
 }

@@ -5,6 +5,8 @@ use std::{
     process::{Command, Stdio},
 };
 
+use serde_json::Value;
+
 /// Ejecuta el .jar de Java con un solo argumento y devuelve TODO el stdout
 pub fn run_java_command(argument: &str) -> Result<String, String> {
     // Home
@@ -39,13 +41,19 @@ pub fn run_java_command(argument: &str) -> Result<String, String> {
     // Read the stdout
     let stdout = child.stdout.take().ok_or("Couldn't get the stdout, yo!")?;
     let mut reader = BufReader::new(stdout);
-    let mut output = String::new();
+    let mut output_raw = String::new();
     reader
-        .read_to_string(&mut output)
-        .map_err(|e| format!("Error al leer salida: {}", e))?;
+        .read_to_string(&mut output_raw)
+        .map_err(|e| format!("Could'nt read the output, yo!: {}", e))?;
 
     // Wait for the child to finish
     let _ = child.wait();
 
-    Ok(output)
+    // Make the JSON pretty!
+    if let Ok(json) = serde_json::from_str::<Value>(&output_raw) {
+        serde_json::to_string_pretty(&json)
+            .map_err(|e| format!("Couldn't format to JSON, yo!: {}", e))
+    } else {
+        Ok(output_raw)
+    }
 }

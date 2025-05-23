@@ -8,9 +8,9 @@ public class Move {
     public String source;
 
     // Constructor
-    public Move(String date, double ammount, String tag, String source) {
+    public Move(String date, double amount, String tag, String source) {
         this.date = date;
-        this.amount = ammount;
+        this.amount = amount;
         this.tag = tag;
         this.source = source;
     }
@@ -18,6 +18,12 @@ public class Move {
     public String toString() {
         String identifier = "Move: date: " + this.date + ", amount: " + this.amount + ", tag: " + this.tag
                 + ", source: " + this.source;
+
+        String id = "Move: \n" +
+                "- Date:" + this.date + "\n" +
+                "- Amount:" + this.amount + "\n" +
+                "- Tag:" + this.tag + "\n" +
+                "- Source:" + this.source + "\n";
         return identifier;
     }
 

@@ -45,20 +45,20 @@ public class AVL<T> {
     // método, ignorando cosas como la altura.
     public static class Pir<I, L> {
 
-        protected I identifier;
-        protected L list;
+        protected I date;
+        protected L moves;
 
         public Pir(I id, L list) {
-            this.identifier = id;
-            this.list = list;
+            this.date = id;
+            this.moves = list;
         }
 
         public L returnList() {
-            return this.list;
+            return this.moves;
         }
 
         public String toString() {
-            String identifier = "Pair: Id = " + this.identifier + ", List = " + this.list;
+            String identifier = "Pair: Id = " + this.date + ", List = " + this.moves;
             return identifier;
         }
 

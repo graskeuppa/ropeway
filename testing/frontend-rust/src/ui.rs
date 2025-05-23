@@ -1,7 +1,7 @@
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
-    style::Stylize,
+    //    style::Stylize,
     widgets::{self, Block, Borders, Paragraph, Wrap},
 };
 
@@ -22,9 +22,10 @@ pub fn draw(f: &mut Frame, app: &App) {
         .wrap(Wrap { trim: false });
     f.render_widget(input, chunks[0]);
 
-    // Widget for output
-    let output = Paragraph::new(app.output.as_str())
+    // Widget for output + added logic for scrolling when the output is too large
+    let mut output = Paragraph::new(app.output.as_str())
         .block(Block::default().title("Output").borders(Borders::ALL))
         .wrap(Wrap { trim: false });
+    output = output.scroll((app.scroll, 0));
     f.render_widget(output, chunks[1]);
 }
