@@ -5,7 +5,28 @@ use std::{
     process::{Command, Stdio},
 };
 
+use serde::Deserialize;
 use serde_json::Value;
+
+// Versión desalactosada de Move para dibujar la gráfica
+#[derive(Deserialize)]
+pub struct Move {
+    // pub date: String,
+    pub amount: f64,
+    // #[serde(default)]
+    // pub tag: String,
+    // #[serde(default)]
+    // pub source: String,
+}
+
+/// Llama al comando gráfico y parsea JSON en Vec<Move>
+pub fn run_graph_command(d1: &str, d2: &str) -> Result<Vec<Move>, String> {
+    // construye comando: e.g. "/graph 2025-05-22 2025-05-23"
+    let cmd = format!("/graph {} {}", d1, d2);
+    let raw = run_java_command(&cmd)?;
+    serde_json::from_str::<Vec<Move>>(&raw)
+        .map_err(|e| format!("Error al parsear JSON gráfico: {}", e))
+}
 
 /// Ejecuta el .jar de Java con un solo argumento y devuelve TODO el stdout
 pub fn run_java_command(argument: &str) -> Result<String, String> {

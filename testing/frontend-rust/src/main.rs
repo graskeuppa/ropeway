@@ -3,7 +3,7 @@ mod commands;
 mod ui;
 
 use crate::app::App;
-use crate::commands::run_java_command;
+use crate::commands::{run_graph_command, run_java_command};
 use crate::ui::draw;
 
 use crossterm::{
@@ -55,27 +55,36 @@ fn run_app(
     loop {
         // Draw the frame to the terminal
         terminal.draw(|f| draw(f, app))?;
-
         if event::poll(std::time::Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    // q to exit, arrows to scroll up or down
+                    // Ctrl + q to quit, arros to scroll up or down
                     KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        app.quit();
+                        app.quit()
                     }
-                    KeyCode::Up => app.scroll_up(),
-                    KeyCode::Down => app.scroll_down(),
-                    // Send the command to the backend
+                    KeyCode::PageUp | KeyCode::Up => app.scroll_up(),
+                    KeyCode::PageDown | KeyCode::Down => app.scroll_down(),
                     KeyCode::Enter => {
-                        // Only calls the backend if the input isn't empty
-                        if !app.input.trim().is_empty() {
-                            match run_java_command(&app.input) {
-                                Ok(output) => {
-                                    app.output = output;
-                                    app.scroll = 0;
+                        let input = app.input.trim();
+                        // Special graph case
+                        if input.starts_with("/graph ") {
+                            let parts: Vec<&str> = input.split_whitespace().collect();
+                            if parts.len() == 3 {
+                                match run_graph_command(parts[1], parts[2]) {
+                                    Ok(data) => app.load_graph(data),
+                                    Err(e) => app.output = format!("Error graph: {}", e),
                                 }
+                            } else {
+                                app.output = "{\"Command err\", Expected - GRAPH -d1- -d2-}".into();
+                            }
+                        // Only calls the backend if the imput isn't empty
+                        } else if !input.is_empty() {
+                            match run_java_command(input) {
+                                Ok(o) => app.output = o,
                                 Err(e) => app.output = format!("Error: {}", e),
                             }
+                            app.scroll = 0;
+                            app.show_chart = false;
                         }
                         app.input.clear(); // Flush the input once that's done
                     }

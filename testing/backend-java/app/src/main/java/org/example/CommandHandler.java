@@ -47,7 +47,11 @@ public class CommandHandler {
                         "-----------------------\n\n" +
                         "About Moves:\n" +
                         "Each transaction is refered to as 'Move' within ropeway, they consist of:\n" +
-                        "- Date: You are free to choose the format of the date. I recommend using <yyyy-mm-dd>.\n"
+                        // "- Date: You are free to choose the format of the date. I recommend using
+                        // <yyyy-mm-dd>.\n"
+                        // +
+
+                        "- Date: Make sure that the date is in the <yyyy-mm-dd> format. (at least for now, I'll handle different formats later)\n"
                         +
                         "- Amount: A floating point number that can either be positive or negative\n" +
                         "- Tag: The tag is meant to contain the nature of the Move. Although it's recommend to keep tags simple, they can be of any size. \n"
@@ -73,6 +77,8 @@ public class CommandHandler {
                         "- /getmovespertag <tag>: Returns all moves associated with the given tag.\n" +
                         "- /getmovespersource <source>: Returns all moves associated with the given source.\n" +
                         "- /getmptbtw <tag> <date1> <date2>: Returns all moves associated with the given tag between the two given dates.\n"
+                        +
+                        "- /graph <date1> <date2>: Shows a simple bar of each move within the specified period. date1 must be less or equal to date2.\n"
                         +
 
                         "- /getmpsbtw <source> <date1> <date2>: Returns all moves associated with the given source between the two given dates.\n"
@@ -160,6 +166,17 @@ public class CommandHandler {
             // --------------------------------------------------------------------------------------------
 
             // --------------------------------------------------------------------------------------------
+            // Calls getMovesBetween (returns a list of Pairs, the first element of each
+            // pair is the date and the second the list of moves associated with it)
+            case "/graph":
+                // GRAPH <date1> <date2>
+                if (segments.length < 3)
+                    return gson.toJson(Map.of("Command err",
+                            "Incomplete date range, yo! - Expected: GRAPH -date1- -date2- (date1<=date2)"));
+                return graph(segments[1], segments[2]);
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
             // Calls getMovesPerTagBetween (returns all moves associated with the tag within
             // the given dates)
             case "/getmptbtw":
@@ -231,6 +248,7 @@ public class CommandHandler {
     ArrayList<Move> gmpt;
     ArrayList<Move> gmps;
     public boolean found;
+    public int totalin, totalout, nettotal;
 
     private String getMovesPerTagIn(String tag, String date) {
 
@@ -246,8 +264,9 @@ public class CommandHandler {
 
             }
         }
-        // return temp.toString();
-        return gson.toJson(Map.of("Moves with the " + tag + " tag made on " + date + ":", temp));
+        moneyMovement(temp);
+        return gson.toJson(Map.of("NET TOTAL = " + nettotal, "INCOME = " + totalin + ", OUTCOME = " + totalout,
+                "Moves with the " + tag + " tag made on " + date + ":", temp));
 
     }
 
@@ -261,13 +280,34 @@ public class CommandHandler {
                 temp.add(move);
             }
         }
-        return gson.toJson(Map.of("Moves with the " + source + " source made on " + date
-                + ":", temp));
+        moneyMovement(temp);
+        return gson.toJson(Map.of("NET TOTAL = " + nettotal, "INCOME = " + totalin + ", OUTCOME = " + totalout,
+                "Moves with the " + source + " source made on " + date
+                        + ":",
+                temp));
+
+    }
+
+    private void moneyMovement(ArrayList<Move> moves) {
+        totalin = 0;
+        totalout = 0;
+        nettotal = 0;
+
+        for (Move move : moves) {
+
+            if (move.amount < 0) {
+                totalout += move.amount;
+            } else {
+                totalin += move.amount;
+            }
+
+            nettotal += move.amount;
+
+        }
 
     }
 
     private String getMovesPerSourceBetween(String source, String d1, String d2) {
-
         // 1. We get the moves made bewteen d1 and d2.
         // 1.5 The method getBetween from the trees gives back an ArrayList of Pairs
         // 1.6 Each pir has as its second generic caracterization an ArrayList<Move>
@@ -285,49 +325,53 @@ public class CommandHandler {
         if (found == true) {
             // It is currently ArrayList<Pir<Integer, ArrayList<Move>>>
 
-            ArrayList<Move> temp1 = new ArrayList<>();
+            // This "flattens" the list
+            ArrayList<Move> flat = flattenPirList(gmb);
+
             ArrayList<Move> temp2 = new ArrayList<>();
-
-            for (Pir<Integer, ArrayList<Move>> pir : gmb) {
-                temp1.addAll(pir.returnList());
-            }
-
-            for (Move move : temp1) {
+            for (Move move : flat) {
                 if (source.equals(move.source)) {
                     temp2.add(move);
                 }
             }
 
+            moneyMovement(temp2);
             return gson.toJson(
-                    Map.of("Moves with the source " + source + " made between " + d1 + " and " + d2 + ":", temp2));
-
+                    Map.of("NET TOTAL = " + nettotal, "INCOME = " + totalin + ", OUTCOME = " + totalout,
+                            "Moves with the source " + source + " made between " + d1 + " and " + d2 + ":", temp2));
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
 
     }
 
-    private String getMovesPerTagBetween(String tag, String d1, String d2) {
+    public ArrayList<Move> flattenPirList(ArrayList<Pir<Integer, ArrayList<Move>>> pirlist) {
+        ArrayList<Move> flattened = new ArrayList<>();
 
+        for (Pir<Integer, ArrayList<Move>> pir : pirlist) {
+            flattened.addAll(pir.returnList());
+        }
+        return flattened;
+    }
+
+    private String getMovesPerTagBetween(String tag, String d1, String d2) {
         getMovesBetweenVOID(d1, d2);
 
         if (found == true) {
 
-            ArrayList<Move> temp1 = new ArrayList<>();
+            ArrayList<Move> flat = flattenPirList(gmb);
+
             ArrayList<Move> temp2 = new ArrayList<>();
-
-            for (Pir<Integer, ArrayList<Move>> pir : gmb) {
-                temp1.addAll(pir.returnList());
-            }
-
-            for (Move move : temp1) {
+            for (Move move : flat) {
                 if (tag.equals(move.tag)) {
                     temp2.add(move);
                 }
             }
 
+            moneyMovement(temp2);
             return gson.toJson(
-                    Map.of("Moves with the tag " + tag + " made between " + d1 + " and " + d2 + ":", temp2));
+                    Map.of("NET TOTAL = " + nettotal, "INCOME = " + totalin + ", OUTCOME = " + totalout,
+                            "Moves with the tag " + tag + " made between " + d1 + " and " + d2 + ":", temp2));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
@@ -335,11 +379,26 @@ public class CommandHandler {
     }
 
     private String getMovesBetween(String d1, String d2) {
-
         getMovesBetweenVOID(d1, d2);
 
         if (found == true) {
-            return gson.toJson(Map.of("Moves made between " + d1 + " and " + d2 + ":", gmb));
+            ArrayList<Move> flat = flattenPirList(gmb);
+            moneyMovement(flat);
+            return gson.toJson(Map.of("NET TOTAL = " + nettotal, "INCOME = " + totalin + ", OUTCOME = " + totalout,
+                    "Moves made between " + d1 + " and " + d2 + ":", flat));
+        } else {
+            return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
+        }
+
+    }
+
+    private String graph(String d1, String d2) {
+        getMovesBetweenVOID(d1, d2);
+
+        if (found == true) {
+            ArrayList<Move> flat = flattenPirList(gmb);
+            moneyMovement(flat);
+            return gson.toJson(flat);
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
         }
@@ -351,8 +410,15 @@ public class CommandHandler {
         moves.getParentFile().mkdirs();
         AVL<Move> tree;
 
-        int date1 = Integer.parseInt(d1.trim().replaceAll("-", ""));
-        int date2 = Integer.parseInt(d2.trim().replaceAll("-", ""));
+        int date1, date2;
+
+        try {
+            date1 = Integer.parseInt(d1.trim().replaceAll("-", ""));
+            date2 = Integer.parseInt(d2.trim().replaceAll("-", ""));
+        } catch (Exception e) {
+            System.err.println(gson.toJson(Map.of("Date err", "Couldn't convert date String to Integer, yo!")));
+            return;
+        }
 
         if (moves.exists()) {
             found = true;
@@ -381,7 +447,10 @@ public class CommandHandler {
         getMovesPerDateVOID(date);
 
         if (found == true) {
-            return gson.toJson(Map.of("Moves made on " + date, gmpd));
+
+            moneyMovement(gmpd);
+            return gson.toJson(Map.of("NET TOTAL = " + nettotal, "INCOME = " + totalin + ", OUTCOME = " + totalout,
+                    "Moves made on " + date, gmpd));
 
         } else {
             return gson.toJson(Map.of("No moves err", "There are no moves, yo!"));
@@ -417,11 +486,13 @@ public class CommandHandler {
     }
 
     private String getMovesPerTag(String tag) {
-
         getMovesPerTagVOID(tag);
 
         if (found == true) {
-            return gson.toJson(Map.of("Moves with the " + tag + " tag:", gmpt));
+
+            moneyMovement(gmpt);
+            return gson.toJson(Map.of("NET TOTAL = " + nettotal, "INCOME = " + totalin + ", OUTCOME = " + totalout,
+                    "Moves with the " + tag + " tag:", gmpt));
         } else {
             return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
         }
@@ -456,11 +527,12 @@ public class CommandHandler {
     }
 
     private String getMovesPerSource(String source) {
-
         getMovesPerSourceVOID(source);
 
         if (found == true) {
-            return gson.toJson(Map.of("Moves with the " + source + " source:", gmps));
+            moneyMovement(gmps);
+            return gson.toJson(Map.of("NET TOTAL = " + nettotal, "INCOME = " + totalin + ", OUTCOME = " + totalout,
+                    "Moves with the " + source + " source:", gmps));
         } else {
             return gson.toJson(Map.of("No moves err", "No moves have been made, yo!"));
         }
@@ -564,6 +636,7 @@ public class CommandHandler {
         // x tag made during (n,a) period of time, or "All moves with x source of money
         // made during (t,o) period, etc."
 
+        // Actual points of failure, the date and the amount
         try {
             Integer.parseInt(arguments[1].trim().replaceAll("-", ""));
             Double.parseDouble(arguments[2]);
@@ -571,6 +644,8 @@ public class CommandHandler {
         } catch (Exception e) {
             return gson.toJson(Map.of("Arguments err", "Mismatched types, yo!"));
         }
+
+        // Routes to the files
 
         File movesTAG = new File("./JSON/movesTAG.json");
         movesTAG.getParentFile().mkdirs();
@@ -596,7 +671,7 @@ public class CommandHandler {
                 e.printStackTrace();
                 pertag = new HTable<>();
             }
-        } else { // File does not exist, make a new one
+        } else { // File does not exist, make a new HTable
 
             pertag = new HTable<>();
 
@@ -735,7 +810,7 @@ public class CommandHandler {
             e.printStackTrace();
         }
 
-        return "Move saved to files! To see Moves you've made, search them using any of the provided commands!";
+        return "Move saved to files!\nTo see Moves you've made, search them using any of the provided commands!\n\n (Type '/help if you're a little lost!')";
 
     }
 
